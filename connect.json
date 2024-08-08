@@ -1,0 +1,22 @@
+{
+    "name": "demo",
+    "config": {
+        "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+	      "database.hostname": "10.6.201.222",
+        "database.port": "3000",
+        "database.user": "postgres",
+	      "database.password": "password",
+        "database.dbname": "postgres",
+        "plugin.name": "pgoutput",
+        "database.server.name": "source",
+        "key.converter.schemas.enable": "false",
+        "value.converter.schemas.enable": "false",
+        "transforms": "unwrap",
+        "transforms.unwrap.type": "io.debezium.transforms.ExtractNewRecordState",
+        "value.converter": "org.apache.kafka.connect.json.JsonConverter",
+        "key.converter": "org.apache.kafka.connect.json.JsonConverter",
+	      "table.include.list": "public.typicode_database",
+        "slot.name" : "dbz_sales_transaction_slot",
+             "topic.prefix":"spark"
+    }
+}
