@@ -1,50 +1,6 @@
 version: "3"
 
-x-airflow-common: &airflow-common
-  build:
-    context: .
-    dockerfile: Dockerfile
-  env_file:
-    - airflow.env
-  volumes:
-    - ./jobs:/opt/airflow/jobs
-    - ./dags:/opt/airflow/dags
-    - ./scripts:/opt/airflow/scripts
-    - ./data:/opt/airflow/data
-#    - ./logs:/opt/airflow/logs
-  depends_on:
-    - airflow-db
-  networks:
-    - kafka_network
-    
 services:
-
-  #spark-service
-  spark-master:
-    image: bitnami/spark:latest
-    command: bin/spark-class org.apache.spark.deploy.master.Master
-    volumes:
-      - ./jobs:/opt/bitnami/spark/jobs
-    ports:
-      - "9090:8080"
-      - "7077:7077"
-    networks:
-      - kafka_network
-
-  spark-worker:
-    image: bitnami/spark:latest
-    command: bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
-    volumes:
-      - ./jobs:/opt/bitnami/spark/jobs
-    depends_on:
-      - spark-master
-    environment:
-      SPARK_MODE: worker
-      SPARK_WORKER_CORES: 2
-      SPARK_WORKER_MEMORY: 1g
-      SPARK_MASTER_URL: spark://spark-master:7077
-    networks:
-      - kafka_network
 
   pyspark:
     image: "jupyter/all-spark-notebook"
@@ -52,11 +8,7 @@ services:
       - ".:/opt/spark/"
     ports:
       - 8888:8888
-    networks:
-      - kafka_network
   
-  #kafka-service
-
   kafka1:
     image: confluentinc/cp-kafka
     container_name: kafka1
@@ -77,9 +29,7 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 2
       CLUSTER_ID: "p8fFEbKGQ22B6M_Da_vCBw"
       KAFKA_LOG_DIRS: "/tmp/kraft-combined-logs" 
-    networks:
-      - kafka_network
-
+  
   kafka2:
     image: confluentinc/cp-kafka
     container_name: kafka2
@@ -100,8 +50,6 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 2
       CLUSTER_ID: "p8fFEbKGQ22B6M_Da_vCBw"
       KAFKA_LOG_DIRS: "/tmp/kraft-combined-logs"
-    networks:
-      - kafka_network
 
   kafka3:
     image: confluentinc/cp-kafka
@@ -123,9 +71,7 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3
       CLUSTER_ID: "p8fFEbKGQ22B6M_Da_vCBw"
       KAFKA_LOG_DIRS: "/tmp/kraft-combined-logs"
-    networks:
-      - kafka_network
-
+  
   kafka-ui:
     container_name: kafka-ui
     image: provectuslabs/kafka-ui:latest
@@ -143,8 +89,6 @@ services:
       KAFKA_CLUSTERS_0_KAFKACONNECT_0_NAME: connect
       KAFKA_CLUSTERS_0_KAFKACONNECT_0_ADDRESS: http://connect:8083
       DYNAMIC_CONFIG_ENABLED: "true"
-    networks:
-      - kafka_network
 
   schema-registry:
     image: confluentinc/cp-schema-registry
@@ -160,8 +104,6 @@ services:
       - kafka1
       - kafka2
       - kafka3
-    networks:
-      - kafka_network
 
   connect:
     image: quay.io/debezium/connect:latest
@@ -177,64 +119,8 @@ services:
       - CONFIG_STORAGE_TOPIC=my_connect_configs
       - OFFSET_STORAGE_TOPIC=my_connect_offsets
       - STATUS_STORAGE_TOPIC=my_connect_statuses
-    networks:
-      - kafka_network
 
-  #airflow services
-  airflow-db:
-    image: postgres:14.0
-    environment:
-      - POSTGRES_USER=airflow
-      - POSTGRES_PASSWORD=airflow
-      - POSTGRES_DB=airflow
-    ports:
-      - 4040:5432
-    networks:
-      - kafka_network
-  
-  airflow-webserver:
-    <<: *airflow-common
-    command: webserver
-    ports:
-      - "8080:8080"
-    depends_on:
-      - airflow-scheduler
-
-  airflow-scheduler:
-    <<: *airflow-common
-    command: bash -c "airflow db migrate && airflow users create --username admin --firstname Viet --lastname Lam --role Admin --email vietlam050607@gmail.com --password admin && airflow scheduler"
-
-  #minio-service
-  minio:
-    hostname: minio
-    image: minio/minio:latest
-    container_name: minio
-    ports:
-      - "9000:9000"
-      - "9001:9001"
-    volumes:
-      - ./minio_data:/data
-    environment:
-      MINIO_ROOT_USER: vietlam
-      MINIO_ROOT_PASSWORD: 20022003
-    command: server /data --console-address ":9001"
-    networks:
-      - kafka_network
-
-  #cassandra_database
-  cassandra_db:
-    image: cassandra:latest
-    container_name: cassandra
-    hostname: cassandra
-    ports:
-      - "9042:9042"
-    environment:
-      - MAX_HEAP_SIZE=512M
-      - HEAP_NEWSIZE=100M
-      - CASSANDRA_USERNAME=cassandra
-      - CASSANDRA_PASSWORD=cassandra
-    networks:
-      - kafka_network
 networks:
-    kafka_network:
-  
+  default:
+    name: kafka_network
+    external: true
