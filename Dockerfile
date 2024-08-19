@@ -15,8 +15,8 @@ ENV PATH="${SPARK_HOME}/bin:${PATH}"
 
 
 # Install Spark (optional: you can choose the version you need)
-RUN curl -sL "https://downloads.apache.org/spark/spark-3.5.1/spark-3.5.1-bin-hadoop3.tgz" | tar xz -C /opt \
-    && mv /opt/spark-3.5.1-bin-hadoop3 /opt/spark
+RUN curl -sL "https://downloads.apache.org/spark/spark-3.5.2/spark-3.5.2-bin-hadoop3.tgz" | tar xz -C /opt \
+    && mv /opt/spark-3.5.2-bin-hadoop3 /opt/spark
 
 USER airflow
 
