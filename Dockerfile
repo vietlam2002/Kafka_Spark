@@ -5,6 +5,7 @@ RUN apt-get update && apt-get install -y \
     openjdk-11-jdk \
     scala \
     curl \
+    vim \
     && rm -rf /var/lib/apt/lists/*
 
 # Set JAVA_HOME environment variable
@@ -17,6 +18,9 @@ ENV PATH="${SPARK_HOME}/bin:${PATH}"
 # Install Spark (optional: you can choose the version you need)
 RUN curl -sL "https://downloads.apache.org/spark/spark-3.5.2/spark-3.5.2-bin-hadoop3.tgz" | tar xz -C /opt \
     && mv /opt/spark-3.5.2-bin-hadoop3 /opt/spark
+
+# Copy .vimrc file into the correct path
+COPY vim/.vimrc /opt/airflow/.vimrc
 
 USER airflow
 
