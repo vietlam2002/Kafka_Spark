@@ -24,4 +24,14 @@ COPY vim/.vimrc /opt/airflow/.vimrc
 
 USER airflow
 
-RUN pip install apache-airflow apache-airflow-providers-apache-spark pyspark kafka-python
+RUN pip install apache-airflow apache-airflow-providers-apache-spark pyspark kafka-python cassandra-driver
+
+USER root
+# Download and add Kafka and Cassandra connectors
+RUN mkdir -p /opt/spark/jars/ && \
+    chmod -R 777 /opt/spark/jars/ && \
+    curl -o /opt/spark/jars/spark-sql-kafka-0-10_2.13-3.4.1.jar https://repo1.maven.org/maven2/org/apache/spark/spark-sql-kafka-0-10_2.13/3.4.1/spark-sql-kafka-0-10_2.13-3.4.1.jar && \
+    curl -o /opt/spark/jars/kafka-clients-3.4.0.jar https://repo1.maven.org/maven2/org/apache/kafka/kafka-clients/3.4.0/kafka-clients-3.4.0.jar && \
+    curl -o /opt/spark/jars/spark-cassandra-connector_2.13-3.4.1.jar https://repo1.maven.org/maven2/com/datastax/spark/spark-cassandra-connector_2.13/3.4.1/spark-cassandra-connector_2.13-3.4.1.jar
+
+USER airflow
