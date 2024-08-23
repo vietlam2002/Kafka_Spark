@@ -88,7 +88,7 @@ def connect_to_kafka(spark_conn):
     try:
         spark_df = spark_conn.readStream \
             .format('kafka') \
-            .option('kafka.bootstrap.servers', 'kafka1:29092') \
+            .option('kafka.bootstrap.servers', 'kafka1:29092,kafka2:29092,kafka3:29092') \
             .option('subscribe', 'users_created') \
             .option('startingOffsets', 'earliest') \
             .load()
@@ -103,7 +103,8 @@ def connect_to_kafka(spark_conn):
 def create_cassandra_connection():
     try:
         # connecting to the cassandra cluster
-        cluster = Cluster(['localhost'])
+        # cluster = Cluster(['localhost'])
+        cluster = Cluster(['cassandra'], port=9042)
 
         cas_session = cluster.connect()
 
@@ -143,7 +144,9 @@ if __name__ == "__main__":
         print("THIS IS OK")
         # connect to kafka with spark connection
         spark_df = connect_to_kafka(spark_conn)
+        print("SUCCESFULL.")
         selection_df = create_selection_df_from_kafka(spark_df)
+        print(("Sucessfull!"))
         session = create_cassandra_connection()
 
         if session is not None:
