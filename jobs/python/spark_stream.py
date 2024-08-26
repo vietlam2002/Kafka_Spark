@@ -1,6 +1,7 @@
 import logging
 
 from cassandra.cluster import Cluster
+from cassandra.policies import RoundRobinPolicy
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import from_json, col
 from pyspark.sql.types import StructType, StructField, StringType
@@ -69,9 +70,9 @@ def create_spark_connection():
     try:
         s_conn = SparkSession.builder \
             .appName('SparkDataStreaming') \
-            .config('spark.jars.packages', "com.datastax.spark:spark-cassandra-connector_2.13:3.4.1,"
-                                           "org.apache.spark:spark-sql-kafka-0-10_2.13:3.4.1") \
-            .config('spark.cassandra.connection.host', 'localhost') \
+            .config('spark.jars.packages', "com.datastax.spark:spark-cassandra-connector_2.12:3.5.2,"
+                                           "org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.2") \
+            .config('spark.cassandra.connection.host', 'cassandra') \
             .getOrCreate()
 
         s_conn.sparkContext.setLogLevel("ERROR")
@@ -104,7 +105,8 @@ def create_cassandra_connection():
     try:
         # connecting to the cassandra cluster
         # cluster = Cluster(['localhost'])
-        cluster = Cluster(['cassandra'], port=9042)
+        # cluster = Cluster(['cassandra'], port=9042, protocol_version=5)
+        cluster = Cluster(['cassandra'])
 
         cas_session = cluster.connect()
 
@@ -148,17 +150,40 @@ if __name__ == "__main__":
         selection_df = create_selection_df_from_kafka(spark_df)
         print(("Sucessfull!"))
         session = create_cassandra_connection()
-
+        print("Okeee.")
         if session is not None:
             create_keyspace(session)
             create_table(session)
-
+            # insert_data(session)
             logging.info("Streaming is being started...")
 
             streaming_query = (selection_df.writeStream.format("org.apache.spark.sql.cassandra")
                                .option('checkpointLocation', '/tmp/checkpoint')
-                               .option('keyspace', 'spark_streams')
-                               .option('table', 'created_users')
+                               .options(keyspace='spark_streams', table='created_users')
                                .start())
 
             streaming_query.awaitTermination()
+
+
+            # def write_to_cassandra(batch_df, batch_id):
+            #     for row in batch_df.collect():
+            #         insert_data(session,
+            #                     id=row['id'],
+            #                     first_name=row['first_name'],
+            #                     last_name=row['last_name'],
+            #                     gender=row['gender'],
+            #                     address=row['address'],
+            #                     post_code=row['post_code'],
+            #                     email=row['email'],
+            #                     username=row['username'],
+            #                     dob=row['dob'],
+            #                     registered_date=row['registered_date'],
+            #                     phone=row['phone'],
+            #                     picture=row['picture'])
+            #
+            #
+            # streaming_query = (selection_df.writeStream
+            #                    .foreachBatch(write_to_cassandra)
+            #                    .start())
+            #
+            # streaming_query.awaitTermination()
