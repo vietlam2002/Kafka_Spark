@@ -2,6 +2,9 @@
 
 ## Introduction
 
+This project I was inspired by the project "https://github.com/airscholar/e2e-data-engineering" of "https://github.com/airscholar" - **Youtube**: [CodeWithYu](https://www.youtube.com/@CodeWithYu).
+
+With `docker-compose.yml` and `Dockerfile` built by me, I want to try this project in my environment with anothor updates.
 
 ## Technologies
 
@@ -57,3 +60,5 @@ DESCRIBE KEYSPACES;
 USE spark_streams;
 SELECT * FROM spark_streams.created_users;
 ```
+Result:
+![example](cassandra_demo.png)
